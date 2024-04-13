@@ -13,11 +13,13 @@ from langchain.llms import HuggingFaceHub
 from dotenv import load_dotenv
 import os
 
+"""
 # .env 파일 로드
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 huggingfacehub_api_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+"""
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -42,7 +44,7 @@ def get_text_chunks(text):
 def get_vectorstore(text_chunks):
     # embeddings = OpenAIEmbeddings()
     # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
-    embeddings = HuggingFaceInstructEmbeddings(model_name="intfloat/e5-mistral-7b-instruct", model_kwargs={"device": "cuda:0"})
+    embeddings = HuggingFaceInstructEmbeddings(model_name="intfloat/e5-mistral-7b-instruct", model_kwargs={"device": "cpu"})
     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 
     from langchain.embeddings import HuggingFaceEmbeddings
@@ -54,7 +56,8 @@ def get_vectorstore(text_chunks):
 def get_conversation_chain(vectorstore):
     # llm = ChatOpenAI()
     # llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
-    llm = HuggingFaceHub(repo_id="HuggingFaceH4/zephyr-7b-beta", model_kwargs={"temperature":0.05, "max_length":512})
+    # llm = HuggingFaceHub(repo_id="HuggingFaceH4/zephyr-7b-beta", model_kwargs={"temperature":0.05, "max_length":512})
+    llm = HuggingFaceHub(repo_id="HuggingFaceH4/zephyr-7b-gemma-v0.1", model_kwargs={"device":"cuda:0", "temperature":0.05, "max_length":512})
 
     memory = ConversationBufferMemory(
         memory_key='chat_history', return_messages=True)
