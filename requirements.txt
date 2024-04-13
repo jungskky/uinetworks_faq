@@ -12,3 +12,4 @@ tiktoken==0.4.0
 # uncomment to use instructor embeddings
 # InstructorEmbedding==1.0.1
 # sentence-transformers==2.2.2
+InstructorEmbedding
