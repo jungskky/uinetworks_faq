@@ -1,130 +1,27 @@
-import streamlit as st
-from dotenv import load_dotenv
-from PyPDF2 import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings, HuggingFaceInstructEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from htmlTemplates import css, bot_template, user_template
-from langchain.llms import HuggingFaceHub
 
-from dotenv import load_dotenv
-import os
+import gradio as gr
+from util import querying
 
-"""
-# .env 파일 로드
-load_dotenv()
+iface = gr.ChatInterface(
+    fn = querying,
+    chatbot=gr.Chatbot(height=600),
+    textbox=gr.Textbox(placeholder="질문을 입력해 주세요.", container=False, scale=7),
+    title="쿠팡FAQ [(주)유아이네트웍스 AI 챗봇]",
+    theme="soft",
+    examples=["유효기간 안에 사용하지 못하면 환불 받을 수 있을까요?",
+              "무통장입금을 하고 주문을 취소했는데 환불은 언제 되나요?",],
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
-huggingfacehub_api_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-"""
+    cache_examples=True,
+    retry_btn="Retry",
+    undo_btn="Undo",
+    clear_btn="Clear",
+    submit_btn="Submit"
 
-def get_pdf_text(pdf_docs):
-    text = ""
-    for pdf in pdf_docs:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
-
-
-def get_text_chunks(text):
-    text_splitter = CharacterTextSplitter(
-        separator="\n",
-        chunk_size=1000,
-        chunk_overlap=200,
-        length_function=len
     )
-    chunks = text_splitter.split_text(text)
-    return chunks
 
+iface.launch(share=True)
 
-def get_vectorstore(text_chunks):
-    # embeddings = OpenAIEmbeddings()
-    # embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
-    embeddings = HuggingFaceInstructEmbeddings(model_name="intfloat/e5-mistral-7b-instruct", model_kwargs={"device": "cpu"})
-    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
-
-    from langchain.embeddings import HuggingFaceEmbeddings
-    embeddings_test = HuggingFaceEmbeddings(model_name="intfloat/e5-mistral-7b-instruct")
-
-    return vectorstore
-
-
-def get_conversation_chain(vectorstore):
-    # llm = ChatOpenAI()
-    # llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.5, "max_length":512})
-    # llm = HuggingFaceHub(repo_id="HuggingFaceH4/zephyr-7b-beta", model_kwargs={"temperature":0.05, "max_length":512})
-    llm = HuggingFaceHub(repo_id="HuggingFaceH4/zephyr-7b-gemma-v0.1", model_kwargs={"device":"cuda:0", "temperature":0.05, "max_length":512})
-
-    memory = ConversationBufferMemory(
-        memory_key='chat_history', return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=vectorstore.as_retriever(),
-        memory=memory
-    )
-    return conversation_chain
-
-
-def handle_userinput(user_question):
-    response = st.session_state.conversation({'question': user_question})
-    st.session_state.chat_history = response['chat_history']
-
-    for i, message in enumerate(st.session_state.chat_history):
-        if i % 2 == 0:
-            st.write(user_template.replace(
-                "{{MSG}}", message.content), unsafe_allow_html=True)
-        else:
-            st.write(bot_template.replace(
-                "{{MSG}}", message.content), unsafe_allow_html=True)
-
-
-def main():
-    load_dotenv()
-    st.set_page_config(page_title="Chat with multiple PDFs",
-                       page_icon=":books:")
-    st.write(css, unsafe_allow_html=True)
-
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = None
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
-
-    # st.header("Chat with multiple PDFs :books:")
-    st.header("다중문서 채팅 (유아이네트웍스) :books:")
-    # user_question = st.text_input("Ask a question about your documents:")
-    user_question = st.text_input("질문을 입력해 주세요.:")
-    if user_question:
-        handle_userinput(user_question)
-
-    with st.sidebar:
-        # st.subheader("Your documents")
-        st.subheader("문서 입력")
-        pdf_docs = st.file_uploader(
-            # "Upload your PDFs here and click on 'Process'", accept_multiple_files=True)
-            "PDF파일을 업로드하고 '실행' 버튼을 클릭하세요.", accept_multiple_files=True)
-        # if st.button("Process"):
-        if st.button("실행"):
-            # with st.spinner("Processing"):
-            with st.spinner("실행"):
-
-
-                # get pdf text
-                raw_text = get_pdf_text(pdf_docs)
-
-                # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
-
-                # create vector store
-                vectorstore = get_vectorstore(text_chunks)
-
-                # create conversation chain
-                st.session_state.conversation = get_conversation_chain(
-                    vectorstore)
-
-
-if __name__ == '__main__':
-    main()
+def on_close():
+  iface.set_on_close(on_close)
+  iface.launch()
+  iface.close()
