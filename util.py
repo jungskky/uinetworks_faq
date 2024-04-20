@@ -25,7 +25,8 @@ embeddings = get_embeddings()
 def get_pipe():
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
     # model_name = "HuggingFaceH4/zephyr-7b-gemma-v0.1"
-    model_name = "/content/zephyr-7b-gemma-v0.1"
+    # model_name = "/content/zephyr-7b-gemma-v0.1"
+    model_name = "/content/drive/MyDrive/notebook/datasets/coupang_faq/zephyr_gemma/export"
     pipe = get_pipe_with_model_name(model_name)
     return pipe
 
