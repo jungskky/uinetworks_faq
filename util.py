@@ -12,7 +12,8 @@ def get_embeddings_with_model_name(model_name):
 @staticmethod
 def get_embeddings():
     # model_name = "intfloat/multilingual-e5-large"
-    model_name = "/content/multilingual-e5-large"
+    # model_name = "/content/multilingual-e5-large"
+    model_name = "/content/drive/MyDrive/notebook/models/multilingual-e5-large"
     embeddings = get_embeddings_with_model_name(model_name)
     return embeddings
 
