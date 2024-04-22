@@ -258,7 +258,7 @@ def make_prompt_of_qas_list(query, qas_list):
 {qas_text}
           ####
 
-          You must make a reply very related to Question and Answer sets.
+          You are a Inquiry answer bot. Your task is to generate the appropriate reply for Inquery.
           You should reference Question and Answer sets to generate the reply to Inquiry.
           The reply text content should be within the Answer of Question and Answer sets.
           Do not say that you can not reply.
