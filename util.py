@@ -248,8 +248,6 @@ def make_prompt_of_qas_list(query, qas_list):
         qas_text_arr.append(f"{idx}.Answer: \n{a}\n\n")
     qas_text = "".join(qas_text_arr)
 
-
-
     prompt = f"""
           You are a query maker bot. Your task is to generate the appropriate reply for Inquery.
           Inquery after <<< >>> :
