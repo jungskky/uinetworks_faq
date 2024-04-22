@@ -234,6 +234,82 @@ def get_answer_by_question(faq_qa, question):
 
 
 """
+  make_prompt
+"""
+def make_prompt_of_qas_list(query, qas_list):
+
+    qas_text_arr = []
+    for idx, qa in enumerate(qas_list):
+        q = qas_list[idx]["question"]
+        a = qas_list[idx]["answer"]
+        idx += 1
+        # qas_text_arr.append(f"{idx}.Question: {q}\n A: {a}\n")
+        qas_text_arr.append(f"{idx}.Question: \n{q}\n")
+        qas_text_arr.append(f"{idx}.Answer: \n{a}\n\n")
+    qas_text = "".join(qas_text_arr)
+
+
+
+    prompt = f"""
+          You are a query maker bot. Your task is to generate the appropriate reply for Inquery.
+          Inquery after <<< >>> :
+
+          ####
+          Question and Answer sets:
+
+{qas_text}
+          ####
+
+          If the Inquiry doesn't fit into any of the above Question and Answer sets, generate response as:
+          not matched
+
+          You must make a reply very related to Question and Answer sets.
+          You should reference Question and Answer sets to generate the reply to Inquiry.
+          The reply text content should be within the Answer of Question and Answer sets.
+          Do not say that you can not reply.
+          Do not refer about Question and Answer sets itself.
+          You must always reply in Korean.
+
+          <<<
+        Inquiry: {query}
+          >>>
+
+    """
+    return prompt
+
+
+"""
+  get_answer_by_llm 실행
+  기능 : qas_list (Q/A list)를 참조하여 query에 적합한 답변을 생성한다.
+"""
+def get_answer_by_llm(query, qas_list):
+    prompt = make_prompt_of_qas_list(query, qas_list)
+    messages = [
+        {
+            "role": "system",
+            "content": "",  # Model not yet trained for follow this
+        },
+        {"role": "user", "content": prompt},
+    ]
+    max_new_tokens = 1024
+    outputs = pipe(
+        messages,
+        # max_new_tokens=128,
+        max_new_tokens=max_new_tokens,
+        do_sample=True,
+        temperature=0.7,
+        top_k=50,
+        top_p=0.95,
+        stop_sequence="<|im_end|>",
+    )
+    print(outputs[0]["generated_text"][-1]["content"])
+
+    answer = outputs[0]["generated_text"][-1]["content"]
+
+    return answer
+
+
+"""
   get_answer_by_embedding
 """
 def get_answer_by_embedding(embeddings, faq_qa, query):
@@ -275,7 +351,7 @@ def get_answer_by_embedding(embeddings, faq_qa, query):
     answer = child_qas_list[0]["answer"]
     score = float(child_qas_list[0]["score"])
 
-    return question, answer, score
+    return question, answer, score, child_qas_list
 
 
 def querying(query, history):
@@ -300,11 +376,10 @@ def querying(query, history):
         answer = get_answer_by_question(faq_qa, question)
     else:
         process_type = "Embedding"
-        question, answer, score = get_answer_by_embedding(embeddings, faq_qa, query)
-        """
+        question, answer, score, qas_list = get_answer_by_embedding(embeddings, faq_qa, query)
+
         if score < 0.97:
-            answer = "다시 입력해 주세요."
-        """
+            llm_answer = get_answer_by_llm(query, qas_list)
 
     return_text_arr = []
     return_text_arr.append(f"<h2>Category</h2>\n{category}")
@@ -313,6 +388,7 @@ def querying(query, history):
     return_text_arr.append(f"<h2>Answer</h2>\n{answer}")
     if process_type == "Embedding":
         return_text_arr.append(f"<h2>Score</h2>\n{score}")
+        return_text_arr.append(f"<h2>LLM answer</h2>\n{llm_answer}")
     return_text = "".join(return_text_arr)
 
     return return_text
