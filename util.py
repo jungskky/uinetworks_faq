@@ -260,9 +260,6 @@ def make_prompt_of_qas_list(query, qas_list):
 {qas_text}
           ####
 
-          If the Inquiry doesn't fit into any of the above Question and Answer sets, generate response as:
-          not matched
-
           You must make a reply very related to Question and Answer sets.
           You should reference Question and Answer sets to generate the reply to Inquiry.
           The reply text content should be within the Answer of Question and Answer sets.
@@ -276,6 +273,7 @@ def make_prompt_of_qas_list(query, qas_list):
           >>>
 
     """
+
     return prompt
 
 
