@@ -249,7 +249,8 @@ def make_prompt_of_qas_list(query, qas_list):
     qas_text = "".join(qas_text_arr)
 
     prompt = f"""
-          You are a query maker bot. Your task is to generate the appropriate reply for Inquery.
+          You are a Inquiry answer bot. You will be given some Question and Answer sets.
+          Your task is to generate the appropriate reply for Inquery based on Question and Answer sets.
           Inquery after <<< >>> :
 
           ####
