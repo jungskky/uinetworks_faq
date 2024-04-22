@@ -378,6 +378,7 @@ def querying(query, history):
         process_type = "Embedding"
         question, answer, score, qas_list = get_answer_by_embedding(embeddings, faq_qa, query)
 
+        llm_answer = ""
         if score < 0.97:
             llm_answer = get_answer_by_llm(query, qas_list)
 
