@@ -371,6 +371,7 @@ def querying(query, history):
     process_type = "LLM"
     answer = ""
     score = -1
+    llm_answer = ""
     if question in q_list:
         print("LLM 성공!")
         answer = get_answer_by_question(faq_qa, question)
@@ -378,7 +379,6 @@ def querying(query, history):
         process_type = "Embedding"
         question, answer, score, qas_list = get_answer_by_embedding(embeddings, faq_qa, query)
 
-        llm_answer = ""
         if score < 0.97:
             llm_answer = get_answer_by_llm(query, qas_list)
 
@@ -389,6 +389,7 @@ def querying(query, history):
     return_text_arr.append(f"<h2>Answer</h2>\n{answer}")
     if process_type == "Embedding":
         return_text_arr.append(f"<h2>Score</h2>\n{score}")
+    if len(llm_answer) > 0:
         return_text_arr.append(f"<h2>LLM answer</h2>\n{llm_answer}")
     return_text = "".join(return_text_arr)
 
