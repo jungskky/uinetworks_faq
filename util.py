@@ -12,8 +12,7 @@ def get_embeddings_with_model_name(model_name):
 @staticmethod
 def get_embeddings():
     # model_name = "intfloat/multilingual-e5-large"
-    # model_name = "/content/multilingual-e5-large"
-    model_name = "/content/drive/MyDrive/notebook/models/multilingual-e5-large"
+    model_name = "/content/multilingual-e5-large"
     embeddings = get_embeddings_with_model_name(model_name)
     return embeddings
 
@@ -26,8 +25,9 @@ embeddings = get_embeddings()
 def get_pipe():
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
     # model_name = "HuggingFaceH4/zephyr-7b-gemma-v0.1"
-    # model_name = "/content/zephyr-7b-gemma-v0.1"
-    model_name = "/content/drive/MyDrive/notebook/datasets/coupang_faq/zephyr_gemma/export"
+    # model_name = "/content/zephyr-7b-gemma-v0.1-coupang"
+    # model_name = "/content/zephyr-7b-gemma-v0.1-kr"
+    model_name = "/content/zephyr-7b-gemma-v0.1"
     pipe = get_pipe_with_model_name(model_name)
     return pipe
 
@@ -241,15 +241,25 @@ def get_answer_by_embedding(embeddings, faq_qa, query):
     query_embedding = embeddings.embed_documents([query.strip()])[0]
 
     # Retrieve relevant child documents based on query
-    child_qas = faq_qa.aggregate([{
-      "$vectorSearch": {
-          "index": "vector_index",
-          "path": "embedding_q",
-          "queryVector": query_embedding,
-          "numCandidates": 10,
-          "limit": 1
-      }
-    }])
+    child_qas = faq_qa.aggregate([
+        {
+            "$vectorSearch": {
+                "index": "vector_index",
+                "path": "embedding_q",
+                "queryVector": query_embedding,
+                "numCandidates": 10,
+                "limit": 10
+            }
+        },
+        {
+            "$project": {
+                "category": 1,
+                "question": 1,
+                "answer": 1,
+                "score": {"$meta": "vectorSearchScore"}
+            }
+        }
+    ])
 
     child_qas_list = list(child_qas)
 
@@ -258,11 +268,14 @@ def get_answer_by_embedding(embeddings, faq_qa, query):
         print(child_qas_list[0]["question"])
         print("========================================")
         print(child_qas_list[0]["answer"])
+        print("========================================")
+        print(child_qas_list[0]["score"])
 
     question = child_qas_list[0]["question"]
     answer = child_qas_list[0]["answer"]
+    score = float(child_qas_list[0]["score"])
 
-    return question, answer
+    return question, answer, score
 
 
 def querying(query, history):
@@ -281,18 +294,25 @@ def querying(query, history):
 
     process_type = "LLM"
     answer = ""
+    score = -1
     if question in q_list:
         print("LLM 성공!")
         answer = get_answer_by_question(faq_qa, question)
     else:
         process_type = "Embedding"
-        question, answer = get_answer_by_embedding(embeddings, faq_qa, query)
+        question, answer, score = get_answer_by_embedding(embeddings, faq_qa, query)
+        """
+        if score < 0.97:
+            answer = "다시 입력해 주세요."
+        """
 
     return_text_arr = []
     return_text_arr.append(f"<h2>Category</h2>\n{category}")
     return_text_arr.append(f"<h2>Process type</h2>\n{process_type}")
     return_text_arr.append(f"<h2>Question</h2>\n{question}")
     return_text_arr.append(f"<h2>Answer</h2>\n{answer}")
+    if process_type == "Embedding":
+        return_text_arr.append(f"<h2>Score</h2>\n{score}")
     return_text = "".join(return_text_arr)
 
     return return_text
