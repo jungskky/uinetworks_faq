@@ -269,6 +269,7 @@ def make_prompt_of_qas_list(query, qas_list):
           Do not say that you can not reply.
           Do not refer about Question and Answer sets itself.
           You must always reply in Korean.
+          Your answer should be logical and make sense.
 
           <<<
         Inquiry: {query}
