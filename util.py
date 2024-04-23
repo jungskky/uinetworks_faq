@@ -263,7 +263,7 @@ def make_prompt_of_qas_list(query, qas_list):
           You should reference Question and Answer sets to generate the reply to Inquiry.
           The reply text content should be within the Answer of Question and Answer sets.
           Do not say that you can not reply.
-          Do not refer about Question and Answer sets itself.
+          Do not refer about Question and Answer sets itself including the No of Question and Answer sets.
           You must always reply in Korean.
           Your answer should be logical and make sense.
 
